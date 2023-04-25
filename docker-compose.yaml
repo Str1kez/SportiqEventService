@@ -1,0 +1,50 @@
+version: "3"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: project_db
+    restart: unless-stopped
+    env_file: .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - "project-data:/var/lib/postgresql/data"
+    ports:
+      - 5433:5432
+  storage:
+    image: redis:7-alpine
+    container_name: project_storage
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - "project-storage:/data"
+    ports:
+      - 6379:6379
+  project:
+    image: project:latest
+    build:
+      context: .
+      dockerfile: build/service/Dockerfile
+    container_name: project
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:${APP_PORT}"
+    depends_on:
+      db:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+
+volumes:
+  project-data:
+  project-storage:
