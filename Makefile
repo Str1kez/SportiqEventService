@@ -15,11 +15,8 @@ revision:
 upgrade:
 	cd app/db; poetry run alembic upgrade $(args)
 
-db:
-	docker compose up -d --remove-orphans db
-
-storage:
-	docker compose up -d --remove-orphans storage
+cache db:
+	docker compose up -d --remove-orphans $@
 
 build:
 	docker build . -t project -f build/service/Dockerfile
