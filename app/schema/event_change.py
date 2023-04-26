@@ -2,8 +2,6 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.db.models import EventStatus
-
 
 class EventCreateRequest(BaseModel):
     title: str = Field(..., min_length=5)
@@ -21,10 +19,11 @@ class EventCreateRequest(BaseModel):
         allow_population_by_field_name = True
 
 
-class EventCreateResponse(EventCreateRequest):
-    _id: str = Field(..., alias="id")
-    status: EventStatus
-    creator_id: str = Field(..., alias="creatorId")
-    is_active: bool = Field(..., alias="isActive")
-    created_at: datetime = Field(..., alias="createdAt")
-    updated_at: datetime = Field(..., alias="updatedAt")
+class EventUpdateRequest(BaseModel):
+    title: str = Field(None, min_length=5)
+    description: str | None
+    starts_at: datetime = Field(None, alias="startsAt")
+    ends_at: datetime = Field(None, alias="endsAt")
+
+    class Config:
+        allow_population_by_field_name = True

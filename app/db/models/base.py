@@ -12,7 +12,7 @@ class BaseId(DeclarativeBase):
     __abstract__ = True
     __tablename__ = None
 
-    _id: Mapped[str] = mapped_column(
+    id_: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
         primary_key=True,
         server_default=func.uuid6(),

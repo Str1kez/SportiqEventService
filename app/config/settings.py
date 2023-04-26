@@ -26,6 +26,8 @@ class DefaultSettings(BaseSettings):
 
     CACHE_URL: str = environ.get("CACHE_URL", "redis://localhost")
 
+    HANDICAP_HOURS: int = int(environ.get("HANDICAP_HOURS", 1))
+
     @property
     def database_settings(self) -> dict:
         """

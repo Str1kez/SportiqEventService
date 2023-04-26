@@ -1,4 +1,4 @@
-from app.tools.handicap import is_handicap
+from app.tools.time_checker import time_check
 
 
-__all__ = ["is_handicap"]
+__all__ = ["time_check"]

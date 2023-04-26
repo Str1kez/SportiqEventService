@@ -41,7 +41,7 @@ class Event(BaseId):
     )
     address: Mapped[str] = mapped_column(
         TEXT,
-        nullable=True,  # Perhaps need to change
+        nullable=True,  # TODO: Perhaps need to change
         doc="Address of event",
     )
     city: Mapped[str] = mapped_column(
