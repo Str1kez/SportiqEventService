@@ -1,3 +1,4 @@
+import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, Path, Query, Response, status
@@ -13,7 +14,7 @@ from app.exceptions import (
     UserIdInvalidException,
 )
 from app.schema import EventCreateRequest, EventListMapResponse, EventResponse, EventUpdateRequest
-from app.tools import time_check
+from app.tools import redis_cache, time_check
 from app.usecase import (
     create_event,
     delete_event_by_id,
@@ -49,31 +50,40 @@ async def new_event(
 @router.get("/map", response_model=EventListMapResponse, status_code=status.HTTP_200_OK)
 async def get_event_list_by_query(
     session: db_session,
+    cache: redis_cache,
     city: str = Query(...),
     type_: str = Query(None, alias="type"),
     status: EventStatus = Query(None),
 ) -> EventListMapResponse:
+    in_cache = await cache.get(f"event/map:city={city}:type={type_}:status={status}")
+    if in_cache:
+        return json.loads(in_cache)
     # try:
     event_list = await select_event_list_for_map(city, type_, status, session)
+    await cache.set(f"event/map:city={city}:type={type_}:status={status}", event_list.json(by_alias=True), expire=60)
     # except IntegrityError:
     #     raise EventTypeNotFoundException
     return event_list
 
 
 @router.get("/{id}", response_model=EventResponse, status_code=status.HTTP_200_OK)
-async def get_event(id_: event_id, session: db_session) -> EventResponse:
+async def get_event(id_: event_id, session: db_session, cache: redis_cache) -> EventResponse:
+    in_cache = await cache.get(f"event/{id_}")
+    if in_cache:
+        return json.loads(in_cache)
     try:
         event = await select_event_by_id(id_, session)
     except NoResultFound:
         raise EventNotFoundException
     except DBAPIError:
         raise EventIdInvalidException
+    await cache.set(f"event/{id_}", event.json(by_alias=True), expire=60)
     return event
 
 
 @router.patch("/{id}", response_model=EventResponse, status_code=status.HTTP_200_OK)
 async def update_event(
-    event_data: EventUpdateRequest, id_: event_id, user_id: user_id_from_header, session: db_session
+    event_data: EventUpdateRequest, id_: event_id, user_id: user_id_from_header, session: db_session, cache: redis_cache
 ) -> EventResponse:
     time_check(event_data.starts_at, event_data.ends_at)
     try:
@@ -82,12 +92,14 @@ async def update_event(
         raise EventNotFoundException
     except DBAPIError:
         raise EventIdInvalidException
+    await cache.set(f"event/{id_}", event.json(by_alias=True), expire=60)
     return event
 
 
 @router.delete("/{id}", response_class=Response, status_code=status.HTTP_204_NO_CONTENT)
-async def delete_event(id_: event_id, user_id: user_id_from_header, session: db_session) -> None:
+async def delete_event(id_: event_id, user_id: user_id_from_header, session: db_session, cache: redis_cache) -> None:
     try:
         await delete_event_by_id(id_, user_id, session)
     except DBAPIError:
         return
+    await cache.delete(f"event/{id_}")
