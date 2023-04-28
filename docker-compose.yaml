@@ -16,6 +16,22 @@ services:
       - "data:/var/lib/postgresql/data"
     ports:
       - 5433:5432
+  rabbitmq:
+    image: rabbitmq:3.11-management-alpine
+    hostname: rabbitmq
+    restart: always
+    env_file: .env
+    container_name: rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    volumes:
+      - "rabbitmq:/var/lib/rabbitmq"
+    ports:
+      - 15672:15672
+      - 5672:5672
   cache:
     image: redis:7-alpine
     container_name: event_service_cache
@@ -44,10 +60,13 @@ services:
         condition: service_healthy
       cache:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
 volumes:
   data:
   cache:
+  rabbitmq:
 
 networks:
   default:

@@ -15,7 +15,7 @@ revision:
 upgrade:
 	cd app/db; poetry run alembic upgrade $(args)
 
-cache db:
+cache db rabbitmq:
 	docker compose up -d --remove-orphans $@
 
 build:

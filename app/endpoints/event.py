@@ -1,6 +1,7 @@
 import json
 from typing import Annotated
 
+from aio_pika.abc import AbstractConnection
 from fastapi import APIRouter, Depends, Header, Path, Query, Response, status
 from sqlalchemy.exc import DBAPIError, IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +14,7 @@ from app.exceptions import (
     EventTypeNotFoundException,
     UserIdInvalidException,
 )
+from app.mq import get_connection
 from app.schema import EventCreateRequest, EventListMapResponse, EventResponse, EventUpdateRequest
 from app.tools import redis_cache, time_check
 from app.usecase import (
@@ -29,6 +31,7 @@ router = APIRouter(tags=["Event"], prefix="/event")
 user_id_from_header = Annotated[str, Header(..., alias="User")]
 db_session = Annotated[AsyncSession, Depends(get_session)]
 event_id = Annotated[str, Path(alias="id")]
+mq_connection = Annotated[AbstractConnection, Depends(get_connection)]  # TODO: СДЕЛАТЬ МБ ДОБАВИТЬ PRIORITY В MESSAGE
 
 
 @router.post("", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
