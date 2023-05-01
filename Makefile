@@ -19,7 +19,7 @@ cache db rabbitmq:
 	docker compose up -d --remove-orphans $@
 
 build:
-	docker build . -t project -f build/service/Dockerfile
+	docker build . -t event-service -f build/service/Dockerfile
 
 up:
 	docker compose up -d --remove-orphans
