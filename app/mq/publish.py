@@ -11,6 +11,7 @@ async def publish_json(connection: AbstractConnection, routing_key: str, body: s
     await channel.declare_queue(name=routing_key, durable=True)
     message = aio_pika.Message(
         body=body.encode(),
+        content_type="application/json",
         type=type_.value,
         timestamp=datetime.utcnow(),
         delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
