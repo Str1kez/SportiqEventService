@@ -14,7 +14,7 @@ from app.exceptions import (
     EventTypeNotFoundException,
     UserIdInvalidException,
 )
-from app.mq import get_connection
+from app.mq import MQEventType, get_connection, publish_json
 from app.schema import EventCreateRequest, EventListMapResponse, EventResponse, EventUpdateRequest
 from app.tools import redis_cache, time_check
 from app.usecase import (
@@ -31,7 +31,7 @@ router = APIRouter(tags=["Event"], prefix="/event")
 user_id_from_header = Annotated[str, Header(..., alias="User")]
 db_session = Annotated[AsyncSession, Depends(get_session)]
 event_id = Annotated[str, Path(alias="id")]
-mq_connection = Annotated[AbstractConnection, Depends(get_connection)]  # TODO: СДЕЛАТЬ МБ ДОБАВИТЬ PRIORITY В MESSAGE
+mq_connection = Annotated[AbstractConnection, Depends(get_connection)]
 
 
 @router.post("", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
@@ -39,6 +39,7 @@ async def new_event(
     event_data: EventCreateRequest,
     user_id: user_id_from_header,
     session: db_session,
+    mq: mq_connection,
 ) -> EventResponse:
     time_check(event_data.starts_at, event_data.ends_at)
     try:
@@ -47,6 +48,8 @@ async def new_event(
         raise EventTypeNotFoundException
     except DBAPIError:
         raise UserIdInvalidException
+    mq_message = json.dumps({"user_id": user_id, "event_id": event.id_})
+    await publish_json(mq, "events", mq_message, MQEventType.create)
     return event
 
 
