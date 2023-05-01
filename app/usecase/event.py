@@ -31,7 +31,7 @@ async def select_event_list_for_map(
     if status is not None:
         db_query = db_query.where(Event.status == status)
     else:
-        db_query = db_query.where(Event.status != EventStatus.deleted)
+        db_query = db_query.where(Event.status != EventStatus.deleted).where(Event.status != EventStatus.completed)
 
     db_execution = await session.execute(db_query)
     events_db = db_execution.scalars().all()
