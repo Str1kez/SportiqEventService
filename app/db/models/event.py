@@ -79,7 +79,11 @@ class Event(BaseId):
         doc="DateTime of ending event",
     )
     type_: Mapped[str] = mapped_column(
-        ForeignKey("event_type.name", ondelete="CASCADE"), nullable=False, name="type", doc="Sport type of event"
+        ForeignKey("event_type.name", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        name="type",
+        doc="Sport type of event",
     )
 
     # type: Mapped[EventType] = relationship("EventType", lazy="joined", innerjoin=True, back_populates="events")
