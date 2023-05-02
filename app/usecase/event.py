@@ -1,7 +1,8 @@
-from sqlalchemy import insert, select, update
+from sqlalchemy import insert, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .permission_checker import check_permission, check_status
+from .permission_checker import check_permission, check_status, check_timing
+from app.config.settings import DefaultSettings
 from app.db.models import Event, EventStatus
 from app.schema import EventCreateRequest, EventListMapResponse, EventResponse, EventUpdateRequest
 
@@ -48,6 +49,7 @@ async def update_event_by_id(
     event_db = db_execution.scalar_one()
     check_permission(event_db, user_id)
     check_status(event_db)
+    check_timing(event_db)
     event_db.__dict__.update(event_data.dict(exclude_none=True))
 
     db_query = update(Event).where(Event.id_ == event_db.id_).values(**event_data.dict(exclude_none=True))
@@ -58,12 +60,14 @@ async def update_event_by_id(
 
 
 async def delete_event_by_id(event_id: str, user_id: str, session: AsyncSession) -> None:
+    settings = DefaultSettings()
     db_query = (
         update(Event)
         .where(Event.id_ == event_id)
         .where(Event.is_active == True)
         .where(Event.creator_id == user_id)
         .where(Event.status == EventStatus.planned)
+        .where(Event.starts_at >= text(f"now() + interval '{settings.HANDICAP_HOURS} hours'"))
         .values({"status": EventStatus.deleted.value})
     )
     await session.execute(db_query)

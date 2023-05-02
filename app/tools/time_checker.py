@@ -4,13 +4,13 @@ from app.config import DefaultSettings
 from app.exceptions import EventDurationException, HourHandicapException, StartUpException
 
 
-def __is_handicap(start: datetime, value: timedelta) -> bool:
+def is_handicap(start: datetime, value: timedelta) -> bool:
     return datetime.now(start.tzinfo) + value <= start
 
 
 def time_check(start: datetime, end: datetime):
     settings = DefaultSettings()
-    if not __is_handicap(start, timedelta(hours=settings.HANDICAP_HOURS)):
+    if not is_handicap(start, timedelta(hours=settings.HANDICAP_HOURS)):
         raise HourHandicapException
     if start >= end:
         raise StartUpException
