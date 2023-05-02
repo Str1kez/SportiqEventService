@@ -4,7 +4,7 @@ from app.exceptions.event import (
     EventReadOnlyException,
     EventTypeNotFoundException,
 )
-from app.exceptions.handicap import HourHandicapException, StartUpException
+from app.exceptions.handicap import EventDurationException, HourHandicapException, StartUpException
 from app.exceptions.user import UserIdInvalidException, UserNotCreatorException
 
 
@@ -17,4 +17,5 @@ __all__ = [
     "EventIdInvalidException",
     "UserNotCreatorException",
     "EventReadOnlyException",
+    "EventDurationException",
 ]

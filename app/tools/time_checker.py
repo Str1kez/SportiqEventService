@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from app.config import DefaultSettings
-from app.exceptions import HourHandicapException, StartUpException
+from app.exceptions import EventDurationException, HourHandicapException, StartUpException
 
 
 def __is_handicap(start: datetime, value: timedelta) -> bool:
@@ -9,8 +9,10 @@ def __is_handicap(start: datetime, value: timedelta) -> bool:
 
 
 def time_check(start: datetime, end: datetime):
-    hours = DefaultSettings().HANDICAP_HOURS
-    if not __is_handicap(start, timedelta(hours=hours)):
+    settings = DefaultSettings()
+    if not __is_handicap(start, timedelta(hours=settings.HANDICAP_HOURS)):
         raise HourHandicapException
     if start >= end:
         raise StartUpException
+    if end - timedelta(minutes=settings.EVENT_DURATION_MINUTES) < start:
+        raise EventDurationException

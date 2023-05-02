@@ -103,9 +103,13 @@ async def update_event(
 
 
 @router.delete("/{id}", response_class=Response, status_code=status.HTTP_204_NO_CONTENT)
-async def delete_event(id_: event_id, user_id: user_id_from_header, session: db_session, cache: redis_cache) -> None:
+async def delete_event(
+    id_: event_id, user_id: user_id_from_header, session: db_session, cache: redis_cache, mq: mq_connection
+) -> None:
     try:
         await delete_event_by_id(id_, user_id, session)
     except DBAPIError:
         return
+    mq_message = json.dumps({"status": EventStatus.deleted.value, "event_id": id_})
+    await publish_json(mq, "events", mq_message, MQEventType.change)
     await cache.delete(f"event/{id_}")
