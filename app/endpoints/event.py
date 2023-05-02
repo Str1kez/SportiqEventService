@@ -111,6 +111,6 @@ async def delete_event(
         await delete_event_by_id(id_, user_id, session)
     except DBAPIError:
         return
-    mq_message = json.dumps({"status": EventStatus.deleted.value, "event_id": id_})
+    mq_message = json.dumps({"status": EventStatus.deleted.value, "events": [id_]})
     await publish_json(mq, "events", mq_message, MQEventType.change)
     await cache.delete(f"event/{id_}")
