@@ -92,7 +92,8 @@ async def get_event(id_: event_id, session: db_session, cache: redis_cache) -> E
 async def update_event(
     event_data: EventUpdateRequest, id_: event_id, user_id: user_id_from_header, session: db_session, cache: redis_cache
 ) -> EventResponse:
-    time_check(event_data.starts_at, event_data.ends_at)
+    if event_data.starts_at is not None and event_data.ends_at is not None:
+        time_check(event_data.starts_at, event_data.ends_at)
     try:
         event = await update_event_by_id(event_data, id_, user_id, session)
     except NoResultFound:
