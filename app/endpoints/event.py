@@ -14,7 +14,7 @@ from app.exceptions import (
     EventTypeNotFoundException,
     UserIdInvalidException,
 )
-from app.mq import MQEventType, get_connection, publish_json
+from app.mq import MQEventType, MQManager, publish_json
 from app.schema import EventCreateRequest, EventListMapResponse, EventResponse, EventUpdateRequest
 from app.tools import redis_cache, time_check
 from app.usecase import (
@@ -31,7 +31,7 @@ router = APIRouter(tags=["Event"], prefix="/event")
 user_id_from_header = Annotated[str, Header(..., alias="User")]
 db_session = Annotated[AsyncSession, Depends(get_session)]
 event_id = Annotated[str, Path(alias="id")]
-mq_connection = Annotated[AbstractConnection, Depends(get_connection)]
+mq_connection = Annotated[AbstractConnection, Depends(MQManager().get_connection)]
 
 
 @router.post("", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
