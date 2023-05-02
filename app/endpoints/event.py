@@ -1,7 +1,8 @@
 import json
 from typing import Annotated
 
-from aio_pika.abc import AbstractConnection
+from aio_pika.abc import AbstractChannel
+from aio_pika.pool import Pool
 from fastapi import APIRouter, Depends, Header, Path, Query, Response, status
 from sqlalchemy.exc import DBAPIError, IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,7 +32,7 @@ router = APIRouter(tags=["Event"], prefix="/event")
 user_id_from_header = Annotated[str, Header(..., alias="User")]
 db_session = Annotated[AsyncSession, Depends(get_session)]
 event_id = Annotated[str, Path(alias="id")]
-mq_connection = Annotated[AbstractConnection, Depends(MQManager().get_connection)]
+mq_channel_pool = Annotated[Pool[AbstractChannel], Depends(MQManager().get_channel_pool)]
 
 
 @router.post("", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
@@ -39,7 +40,7 @@ async def new_event(
     event_data: EventCreateRequest,
     user_id: user_id_from_header,
     session: db_session,
-    mq: mq_connection,
+    mq: mq_channel_pool,
 ) -> EventResponse:
     time_check(event_data.starts_at, event_data.ends_at)
     try:
@@ -104,7 +105,7 @@ async def update_event(
 
 @router.delete("/{id}", response_class=Response, status_code=status.HTTP_204_NO_CONTENT)
 async def delete_event(
-    id_: event_id, user_id: user_id_from_header, session: db_session, cache: redis_cache, mq: mq_connection
+    id_: event_id, user_id: user_id_from_header, session: db_session, cache: redis_cache, mq: mq_channel_pool
 ) -> None:
     try:
         await delete_event_by_id(id_, user_id, session)

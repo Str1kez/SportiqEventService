@@ -1,5 +1,8 @@
+from typing import Self
+
 import aio_pika
-from aio_pika.abc import AbstractRobustConnection
+from aio_pika.abc import AbstractChannel, AbstractRobustConnection
+from aio_pika.pool import Pool
 
 from app.config.settings import DefaultSettings
 
@@ -7,32 +10,17 @@ from app.config.settings import DefaultSettings
 settings = DefaultSettings()
 
 
-# class MQManager:
-#     def __init__(self) -> None:
-#         self.connection: AbstractRobustConnection = None
-#
-#     def __new__(cls):
-#         if not hasattr(cls, "instance"):
-#             cls.instance = super(MQManager, cls).__new__(cls)
-#         return cls.instance  # noqa
-#
-#     @classmethod
-#     async def create(cls):
-#         self = MQManager()
-#         self.connection = await aio_pika.connect_robust(DefaultSettings().rabbitmq_uri)
-#         return self
-
-
 class MQManager:
     _instance = None
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls) -> Self:
         if not cls._instance:
             cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(self, uri=settings.rabbitmq_uri):
         self.connection = None
+        self.channel_pool = None
         self.uri = uri
 
     async def get_connection(self) -> AbstractRobustConnection:
@@ -40,8 +28,12 @@ class MQManager:
             self.connection = await aio_pika.connect_robust(self.uri)
         return self.connection
 
+    async def get_channel(self) -> AbstractChannel:
+        if not self.connection:
+            await self.get_connection()
+        return await self.connection.channel()
 
-# async def get_connection() -> AbstractConnection:
-#     instance = await MQManager.create()
-#     async with instance.connection as connection:
-#         yield connection
+    async def get_channel_pool(self) -> Pool[AbstractChannel]:
+        if not self.channel_pool:
+            self.channel_pool = Pool(self.get_channel, max_size=settings.MQ_CHANNEL_POOL_MAX_SIZE)
+        return self.channel_pool

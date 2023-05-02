@@ -28,6 +28,7 @@ class DefaultSettings(BaseSettings):
     RABBITMQ_PORT: int = int(environ.get("RABBITMQ_PORT", 5672))
     RABBITMQ_DEFAULT_USER: str = environ.get("RABBITMQ_DEFAULT_USER", "rmuser")
     RABBITMQ_DEFAULT_PASS: str = environ.get("RABBITMQ_DEFAULT_PASS", "rmpassword")
+    MQ_CHANNEL_POOL_MAX_SIZE: int = int(environ.get("MQ_CHANNEL_POOL_MAX_SIZE", 10))
 
     CACHE_URL: str = environ.get("CACHE_URL", "redis://localhost")
 
