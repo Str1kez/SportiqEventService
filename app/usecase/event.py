@@ -60,15 +60,12 @@ async def update_event_by_id(
 
 
 async def delete_event_by_id(event_id: str, user_id: str, session: AsyncSession) -> None:
-    settings = DefaultSettings()
-    db_query = (
-        update(Event)
-        .where(Event.id_ == event_id)
-        .where(Event.is_active == True)
-        .where(Event.creator_id == user_id)
-        .where(Event.status == EventStatus.planned)
-        .where(Event.starts_at >= text(f"now() + interval '{settings.HANDICAP_HOURS} hours'"))
-        .values({"status": EventStatus.deleted.value})
-    )
+    db_query = select(Event).where(Event.id_ == event_id).where(Event.is_active == True)
+    db_execution = await session.execute(db_query)
+    event_db = db_execution.scalar_one()
+    check_permission(event_db, user_id)
+    check_status(event_db)
+    check_timing(event_db)
+    db_query = update(Event).where(Event.id_ == event_id).values({"status": EventStatus.deleted.value})
     await session.execute(db_query)
     await session.commit()

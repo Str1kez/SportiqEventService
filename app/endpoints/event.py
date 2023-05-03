@@ -65,11 +65,8 @@ async def get_event_list_by_query(
     in_cache = await cache.get(f"event/map:city={city}:type={type_}:status={status}")
     if in_cache:
         return json.loads(in_cache)
-    # try:
     event_list = await select_event_list_for_map(city, type_, status, session)
     await cache.set(f"event/map:city={city}:type={type_}:status={status}", event_list.json(by_alias=True), expire=60)
-    # except IntegrityError:
-    #     raise EventTypeNotFoundException
     return event_list
 
 
@@ -110,8 +107,10 @@ async def delete_event(
 ) -> None:
     try:
         await delete_event_by_id(id_, user_id, session)
+    except NoResultFound:
+        raise EventNotFoundException
     except DBAPIError:
-        return
+        raise EventIdInvalidException
     mq_message = json.dumps({"status": EventStatus.deleted.value, "events": [id_]})
     await publish_json(mq, "events", mq_message, MQEventType.change)
     await cache.delete(f"event/{id_}")
