@@ -25,7 +25,8 @@ The cache is updated after next `GET` or `PATCH` requests.
 ## Microservice
 
 Microservice uses message query to interact with the subscription microservice. \
-It uses RabbitMQ with persistent delivery mode to maintain delivering and handling guarantee.
+It uses RabbitMQ with persistent delivery mode to maintain delivering and handling guarantee. \
+[Events database automatization](https://github.com/Str1kez/SportiqEventAutomatization) is used to update event statuses and mark events as deleted.
 
 ### Startup
 
