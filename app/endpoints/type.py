@@ -15,7 +15,7 @@ router = APIRouter(tags=["Type"], prefix="/type")
 db_session = Annotated[AsyncSession, Depends(get_session)]
 
 
-@router.get("", status_code=status.HTTP_200_OK)
+@router.get("", status_code=status.HTTP_200_OK, summary="List of sport types")
 async def get_sport_types(session: db_session, cache: redis_cache) -> TypesResponse:
     in_cache = await cache.get("/type")
     if in_cache:

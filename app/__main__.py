@@ -41,7 +41,12 @@ async def on_startup(_: FastAPI):
     await close_caches()
 
 
-app = FastAPI(lifespan=on_startup, root_path=f"http://{settings.APP_HOST}:{settings.APP_PORT}")
+app = FastAPI(
+    lifespan=on_startup,
+    root_path=f"http://{settings.APP_HOST}:{settings.APP_PORT}",
+    title="Event Microservice for Sportiq project",
+    description="This microservice supports operatinons on events, interaction with subscription microservice via message queue. **All endpoints are available only for authenticated users by API Gateway**",
+)
 add_cors(app)
 bind_routes(app)
 

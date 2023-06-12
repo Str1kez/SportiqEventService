@@ -35,12 +35,13 @@ event_id = Annotated[str, Path(alias="id")]
 mq_channel_pool = Annotated[Pool[AbstractChannel], Depends(MQManager().get_channel_pool)]
 
 
-@router.post("", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=EventResponse, status_code=status.HTTP_201_CREATED, summary="Create event")
 async def new_event(
     event_data: EventCreateRequest,
     user_id: user_id_from_header,
     session: db_session,
     mq: mq_channel_pool,
+    cache: redis_cache,
 ) -> EventResponse:
     time_check(event_data.starts_at, event_data.ends_at)
     try:
@@ -51,10 +52,11 @@ async def new_event(
         raise UserIdInvalidException
     mq_message = json.dumps({"user_id": user_id, "event_id": event.id_})
     await publish_json(mq, "events", mq_message, MQEventType.create)
+    await cache.set(f"event/{event.id_}", event.json(by_alias=True), expire=60)
     return event
 
 
-@router.get("/map", response_model=EventListMapResponse, status_code=status.HTTP_200_OK)
+@router.get("/map", response_model=EventListMapResponse, status_code=status.HTTP_200_OK, summary="Short info for maps")
 async def get_event_list_by_query(
     session: db_session,
     cache: redis_cache,
@@ -70,7 +72,9 @@ async def get_event_list_by_query(
     return event_list
 
 
-@router.get("/{id}", response_model=EventResponse, status_code=status.HTTP_200_OK)
+@router.get(
+    "/{id}", response_model=EventResponse, status_code=status.HTTP_200_OK, summary="Full info about single event"
+)
 async def get_event(id_: event_id, session: db_session, cache: redis_cache) -> EventResponse:
     in_cache = await cache.get(f"event/{id_}")
     if in_cache:
@@ -101,7 +105,7 @@ async def update_event(
     return event
 
 
-@router.delete("/{id}", response_class=Response, status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", response_class=Response, status_code=status.HTTP_204_NO_CONTENT, summary="Set event as removed")
 async def delete_event(
     id_: event_id, user_id: user_id_from_header, session: db_session, cache: redis_cache, mq: mq_channel_pool
 ) -> None:

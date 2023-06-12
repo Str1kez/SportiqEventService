@@ -1,0 +1,430 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Event Microservice for Sportiq project",
+    "description": "This microservice supports operatinons on events, interaction with subscription microservice via message queue. **All endpoints are available only for authenticated users by API Gateway**",
+    "version": "0.1.0"
+  },
+  "servers": [{ "url": "http://127.0.0.1:8001" }],
+  "paths": {
+    "/api/v1/event": {
+      "post": {
+        "tags": ["Event"],
+        "summary": "Create event",
+        "operationId": "new_event_api_v1_event_post",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "User", "type": "string" },
+            "name": "User",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EventCreateRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EventResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/event/map": {
+      "get": {
+        "tags": ["Event"],
+        "summary": "Short info for maps",
+        "operationId": "get_event_list_by_query_api_v1_event_map_get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "City", "type": "string" },
+            "name": "city",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "title": "Type", "type": "string" },
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": { "$ref": "#/components/schemas/EventStatus" },
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventListMapResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/event/{id}": {
+      "get": {
+        "tags": ["Event"],
+        "summary": "Full info about single event",
+        "operationId": "get_event_api_v1_event__id__get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Id", "type": "string" },
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EventResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Event"],
+        "summary": "Set event as removed",
+        "operationId": "delete_event_api_v1_event__id__delete",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Id", "type": "string" },
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "required": true,
+            "schema": { "title": "User", "type": "string" },
+            "name": "User",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Event"],
+        "summary": "Update Event",
+        "operationId": "update_event_api_v1_event__id__patch",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Id", "type": "string" },
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "required": true,
+            "schema": { "title": "User", "type": "string" },
+            "name": "User",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EventUpdateRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EventResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/type": {
+      "get": {
+        "tags": ["Type"],
+        "summary": "List of sport types",
+        "operationId": "get_sport_types_api_v1_type_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TypesResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/status": {
+      "get": {
+        "tags": ["Status"],
+        "summary": "Enum of possible status",
+        "operationId": "get_available_statuses_api_v1_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EventCreateRequest": {
+        "title": "EventCreateRequest",
+        "required": [
+          "title",
+          "city",
+          "latitude",
+          "longitude",
+          "startsAt",
+          "endsAt",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "title": { "title": "Title", "minLength": 5, "type": "string" },
+          "description": { "title": "Description", "type": "string" },
+          "address": { "title": "Address", "minLength": 5, "type": "string" },
+          "city": { "title": "City", "type": "string" },
+          "latitude": { "title": "Latitude", "type": "number" },
+          "longitude": { "title": "Longitude", "type": "number" },
+          "startsAt": {
+            "title": "Startsat",
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "title": "Endsat",
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": { "title": "Type", "type": "string" }
+        }
+      },
+      "EventListMapResponse": {
+        "title": "EventListMapResponse",
+        "type": "object",
+        "properties": {
+          "events": {
+            "title": "Events",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EventMapResponse" },
+            "default": []
+          }
+        }
+      },
+      "EventMapResponse": {
+        "title": "EventMapResponse",
+        "required": [
+          "id",
+          "title",
+          "city",
+          "latitude",
+          "longitude",
+          "startsAt",
+          "endsAt",
+          "type",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "id": { "title": "Id", "type": "string" },
+          "title": { "title": "Title", "minLength": 5, "type": "string" },
+          "address": { "title": "Address", "minLength": 5, "type": "string" },
+          "city": { "title": "City", "type": "string" },
+          "latitude": { "title": "Latitude", "type": "number" },
+          "longitude": { "title": "Longitude", "type": "number" },
+          "startsAt": {
+            "title": "Startsat",
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "title": "Endsat",
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": { "title": "Type", "type": "string" },
+          "status": { "$ref": "#/components/schemas/EventStatus" }
+        }
+      },
+      "EventResponse": {
+        "title": "EventResponse",
+        "required": [
+          "title",
+          "city",
+          "latitude",
+          "longitude",
+          "startsAt",
+          "endsAt",
+          "type",
+          "id",
+          "status",
+          "creatorId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "title": { "title": "Title", "minLength": 5, "type": "string" },
+          "description": { "title": "Description", "type": "string" },
+          "address": { "title": "Address", "minLength": 5, "type": "string" },
+          "city": { "title": "City", "type": "string" },
+          "latitude": { "title": "Latitude", "type": "number" },
+          "longitude": { "title": "Longitude", "type": "number" },
+          "startsAt": {
+            "title": "Startsat",
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "title": "Endsat",
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": { "title": "Type", "type": "string" },
+          "id": { "title": "Id", "type": "string" },
+          "status": { "$ref": "#/components/schemas/EventStatus" },
+          "creatorId": { "title": "Creatorid", "type": "string" },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "title": "Updatedat",
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "EventStatus": {
+        "title": "EventStatus",
+        "enum": ["Удалено", "Запланировано", "Завершено", "Идет"],
+        "description": "An enumeration."
+      },
+      "EventUpdateRequest": {
+        "title": "EventUpdateRequest",
+        "type": "object",
+        "properties": {
+          "title": { "title": "Title", "minLength": 5, "type": "string" },
+          "description": { "title": "Description", "type": "string" },
+          "startsAt": {
+            "title": "Startsat",
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "title": "Endsat",
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "HTTPValidationError": {
+        "title": "HTTPValidationError",
+        "type": "object",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ValidationError" }
+          }
+        }
+      },
+      "TypesResponse": {
+        "title": "TypesResponse",
+        "type": "object",
+        "properties": {
+          "types": {
+            "title": "Types",
+            "type": "array",
+            "items": { "type": "string" },
+            "default": []
+          }
+        }
+      },
+      "ValidationError": {
+        "title": "ValidationError",
+        "required": ["loc", "msg", "type"],
+        "type": "object",
+        "properties": {
+          "loc": {
+            "title": "Location",
+            "type": "array",
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] }
+          },
+          "msg": { "title": "Message", "type": "string" },
+          "type": { "title": "Error Type", "type": "string" }
+        }
+      }
+    }
+  }
+}
